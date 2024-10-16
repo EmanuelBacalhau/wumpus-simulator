@@ -81,7 +81,11 @@ export const App = () => {
     if (block.value === 'map') {
       setIsFoundTreasure(true)
       setBoard((oldBoard) => {
-        oldBoard[block.positionTrunk.x][block.positionTrunk.y].value = 'trunk'
+        if (isValidPosition(block.positionTrunk)) {
+          oldBoard[block.positionTrunk.x][block.positionTrunk.y].value = 'trunk'
+          return oldBoard
+        }
+
         return oldBoard
       })
     }
@@ -94,6 +98,7 @@ export const App = () => {
       }
 
       if (block.isTrap) {
+        setIsFoundTreasure(false)
         alert('Game over!😣')
         resetBoard()
         return
