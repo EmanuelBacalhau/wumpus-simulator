@@ -10,7 +10,7 @@ export const App = () => {
   const [isFoundTreasure, setIsFoundTreasure] = useState(false)
 
   const constructorBoard = () => {
-    const board: Board = Array.from({ length: 8 }, (_, indexX) => {
+    let newBoard: Board = Array.from({ length: 8 }, (_, indexX) => {
       return Array.from({ length: 8 }, (_, indexY) => ({ 
         id: `c${indexX}-${indexY}`, 
         value: null, 
@@ -18,30 +18,47 @@ export const App = () => {
       }))
     })
 
-    board[0][0].value = 'player'
+    newBoard[0][0].value = 'player'
 
-    allocateTrunkExtremityRandomly(board)
-    allocateTrunkExtremityRandomly(board, true)
-    allocateTrunkExtremityRandomly(board, false, true)
+    for (let i = 0; i < 3; i++) {
+      allocateTrunkExtremityRandomly(newBoard)
+    }
 
-    allocateMapRandomly(board)
+    for (let i = 0; i < 3; i++) {
+      allocateMonsterRandomly(newBoard)
+    }
 
-    allocateMonsterRandomly(board)
-    allocateMonsterRandomly(board)
-    allocateMonsterRandomly(board)
+    for (let i = 0; i < 10; i++) {
+      allocateStoneRandomly(newBoard)
+    }
 
-    allocateStoneRandomly(board)
-    allocateStoneRandomly(board)
-    allocateStoneRandomly(board)
-    allocateStoneRandomly(board)
-    allocateStoneRandomly(board)
-    allocateStoneRandomly(board)
-    allocateStoneRandomly(board)
-    allocateStoneRandomly(board)
-    allocateStoneRandomly(board)
-    allocateStoneRandomly(board)
+    const positionsTrunks = newBoard.flatMap(line => line.filter(cell => cell.value === 'trunk').map(cell => cell.position))
+    const randomTrunkTreasure = Math.floor(Math.random() * positionsTrunks.length)
+    const randomTrunkTrap = Math.floor(Math.random() * positionsTrunks.length)
 
-    return board
+    newBoard = newBoard.map((line) => {
+      return line.map((cell) => {
+        if (cell.position === positionsTrunks[randomTrunkTreasure]) {
+          return {
+            ...cell,
+            isTreasure: true,
+          }
+        }
+
+        if (cell.position === positionsTrunks[randomTrunkTrap]) {
+          return {
+            ...cell,
+            isTrap: true,
+          }
+        }
+
+        return cell
+      })
+    })
+
+    allocateMapRandomly(newBoard)
+
+    return newBoard
   }
 
   const startBoard = () => {
@@ -133,7 +150,7 @@ export const App = () => {
     if (positionMap) {
       return allocateMapRandomly(board)
     }
-    
+
     board[x][y] = {
       ...board[x][y],
       value: 'map',
