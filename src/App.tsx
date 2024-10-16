@@ -111,6 +111,7 @@ export const App = () => {
 
     if (block.value === 'trunk') {
       if (block.isTreasure) {
+        setIsFoundTreasure(false)
         alert('You found the treasure!🎉')
         resetBoard()
         return
