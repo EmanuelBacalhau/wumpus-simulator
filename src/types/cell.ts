@@ -3,7 +3,6 @@ import type { Position } from "./position"
 type BaseCell = {
   id: string
   position: Position
-  icon: string
 }
 
 type PlayerCell = BaseCell & {

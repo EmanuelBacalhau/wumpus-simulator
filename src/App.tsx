@@ -2,11 +2,12 @@ import { useEffect, useState } from "react"
 import type { Board } from "./types/board"
 import type { Position } from "./types/position"
 import { getStyleForCellType } from "./utils/get-style-for-cell-type"
+import { getIconForCellType } from "./utils/get-icon-for-cell-type"
 
 export const App = () => {
   const [board, setBoard] = useState<Board>([])
   const [playerPosition, setPlayerPosition] = useState({ x: 0, y: 0 })
-  const [monsterPositions, setMonsterPositions] = useState<Position[]>([])
+  const [isFoundTreasure, setIsFoundTreasure] = useState(false)
 
   const constructorBoard = () => {
     const board: Board = Array.from({ length: 8 }, (_, indexX) => {
@@ -14,16 +15,10 @@ export const App = () => {
         id: `c${indexX}-${indexY}`, 
         value: null, 
         position: { x: indexX, y: indexY },
-        icon: ''
       }))
     })
 
-    board[0][0] = {
-      icon: '🐱',
-      id: 'c0-0',
-      value: 'player',
-      position: playerPosition
-    }
+    board[0][0].value = 'player'
 
     allocateTrunkExtremityRandomly(board)
     allocateTrunkExtremityRandomly(board, true)
@@ -51,11 +46,7 @@ export const App = () => {
 
   const startBoard = () => {
     const newBoard = constructorBoard()
-    const initialMonsterPosition = newBoard.flatMap(line => 
-      line.filter(cell => cell.value === 'monster').map(cell => cell.position)
-    )
     setBoard(newBoard)
-    setMonsterPositions(initialMonsterPosition)
   }
 
   const resetBoard = () => {
@@ -66,14 +57,6 @@ export const App = () => {
   useEffect(() => {
     startBoard()
   }, [])
-
-  // TODO - Segunda parte do desafio
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     moveMonster()
-  //   }, 1000)
-  //   return () => clearInterval(interval)
-  // }, [monsterPositions])
 
   const cloneBoard = () => board.map(line => line.map(cell => cell))
 
@@ -96,8 +79,9 @@ export const App = () => {
     const block = board[x][y]
 
     if (block.value === 'map') {
+      setIsFoundTreasure(true)
       setBoard((oldBoard) => {
-        oldBoard[block.positionTrunk.x][block.positionTrunk.y].icon = '🪙'
+        oldBoard[block.positionTrunk.x][block.positionTrunk.y].value = 'trunk'
         return oldBoard
       })
     }
@@ -114,6 +98,8 @@ export const App = () => {
         resetBoard()
         return
       }
+
+      alert('You found a trunk!📦')
     }
 
     setBoard(() => {
@@ -121,77 +107,15 @@ export const App = () => {
       newBoard[playerPosition.x][playerPosition.y] = {
         ...newBoard[playerPosition.x][playerPosition.y],
         value: null,
-        icon: ''
       }
       newBoard[x][y] = {
         ...newBoard[x][y],
         value: 'player',
-        icon: '🐱'
       }
       setPlayerPosition({ x, y })
       return newBoard
     })
   }
-  
-  // const moveMonster = () => {
-  //   let isCollisionPlayer = false
-  //   let newMonsterPositions = []
-  
-  //   const newBoard = cloneBoard()
-    
-  //   newMonsterPositions = monsterPositions.map(position => {
-  //     const random = Math.floor(Math.random() * 4)
-  //     const { x, y } = position
-      
-  //     const positionUp = isValidPosition({ x: x - 1, y }) ? newBoard[x - 1][y] : null
-  //     const positionDown = isValidPosition({ x: x + 1, y }) ? newBoard[x + 1][y] : null
-  //     const positionLeft = isValidPosition({ x, y: y - 1 }) ? newBoard[x][y - 1] : null
-  //     const positionRight = isValidPosition({ x, y: y + 1 }) ? newBoard[x][y + 1] : null
-  
-  //     const isMoveUp = positionUp && (positionUp.value === 'player' || positionUp.value === null)
-  //     const isMoveDown = positionDown && (positionDown.value === 'player' || positionDown.value === null)
-  //     const isMoveLeft = positionLeft && (positionLeft.value === 'player' || positionLeft.value === null)
-  //     const isMoveRight = positionRight && (positionRight.value === 'player' || positionRight.value === null)
-  
-  //     if ((isMoveUp && positionUp?.value === 'player') || 
-  //         (isMoveDown && positionDown?.value === 'player') ||
-  //         (isMoveLeft && positionLeft?.value === 'player') || 
-  //         (isMoveRight && positionRight?.value === 'player')) {
-  //       isCollisionPlayer = true
-  //       return { x, y }
-  //     }
-  
-  //     if (isMoveUp && random === 0) {
-  //       newBoard[x][y].value = null
-  //       newBoard[x - 1][y].value = 'monster'
-  //       return { x: x - 1, y }
-  //     } else if (isMoveDown && random === 1) {
-  //       newBoard[x][y].value = null
-  //       newBoard[x + 1][y].value = 'monster'
-  //       return { x: x + 1, y }
-  //     } else if (isMoveLeft && random === 2) {
-  //       newBoard[x][y].value = null
-  //       newBoard[x][y - 1].value = 'monster'
-  //       return { x, y: y - 1 }
-  //     } else if (isMoveRight && random === 3) {
-  //       newBoard[x][y].value = null
-  //       newBoard[x][y + 1].value = 'monster'
-  //       return { x, y: y + 1 }
-  //     }
-      
-  //     return position
-  //   })
-  
-   
-  //   setBoard(newBoard)
-  //   setMonsterPositions(newMonsterPositions)
-  
-  //   if (isCollisionPlayer) {
-  //     startBoard()
-  //     setPlayerPosition({ x: 0, y: 0 })
-  //     alert('Game over!😣')
-  //   }
-  // }
 
   const allocateMapRandomly = (board: Board) => {
     const x = Math.floor(Math.random() * 7)
@@ -207,7 +131,6 @@ export const App = () => {
       ...board[x][y],
       value: 'map',
       positionTrunk: board.flatMap(line => line.filter(cell => cell.value === 'trunk' && cell.isTreasure).map(cell => cell.position))[0],
-      icon: '🗺️'
     }
   }
 
@@ -228,7 +151,6 @@ export const App = () => {
     board[x][y] = {
       ...board[x][y],
       value: 'monster',
-      icon: '👾'
     } 
   }
 
@@ -249,7 +171,6 @@ export const App = () => {
     board[x][y] = {
       ...board[x][y],
       value: 'stone',
-      icon: '🪨'
     }
   }
 
@@ -288,7 +209,6 @@ export const App = () => {
       isTreasure,
       value: 'trunk',
       isTrap,
-      icon: '📦'
     }
   }
 
@@ -309,7 +229,7 @@ export const App = () => {
                 }
               }}
             >
-              {cell.icon}
+              {getIconForCellType(cell, isFoundTreasure)}
             </button>
           ))
         )}
@@ -317,3 +237,4 @@ export const App = () => {
     </div>
   )
 }
+              
